@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { Calendar, MapPin, Building2, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 
 // This function fetches data from your Supabase database
 async function getOpportunities() {
@@ -24,8 +25,15 @@ export default async function Home() {
       <nav className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold text-indigo-600">DiscoverTech</h1>
-          <div className="flex gap-4">
-            <button className="text-sm font-medium hover:text-indigo-600">Login</button>
+          <div className="flex gap-4 items-center">
+            {/* FIXED: Link is now a direct container, no nested button */}
+            <Link 
+              href="/login" 
+              className="text-sm font-medium hover:text-indigo-600 px-3 py-2"
+            >
+              Login
+            </Link>
+            
             <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">
               Post Opportunity
             </button>
@@ -46,7 +54,7 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* 3. The Feed (Where your data appears) */}
+      {/* 3. The Feed */}
       <div className="max-w-5xl mx-auto px-4 py-12">
         <h3 className="text-xl font-bold mb-6">Latest Opportunities</h3>
         
@@ -62,7 +70,6 @@ export default async function Home() {
                   </span>
                   <h3 className="text-lg font-bold">{item.title}</h3>
                 </div>
-                {/* External Link Icon */}
                 <a href={item.link} target="_blank" className="text-gray-400 hover:text-indigo-600">
                   <ExternalLink size={20} />
                 </a>
@@ -87,7 +94,6 @@ export default async function Home() {
             </div>
           ))}
 
-          {/* Fallback if no data */}
           {opportunities?.length === 0 && (
             <div className="col-span-2 text-center py-10 text-gray-500">
               No opportunities found. Check your database connection.

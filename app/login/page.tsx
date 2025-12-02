@@ -1,120 +1,91 @@
-import { createSupabaseServerClient } from '@/utils/auth-helpers' // Make sure you have this util from earlier
-import { Calendar, MapPin, Building2, ExternalLink, LogOut, User } from 'lucide-react'
-import Link from 'next/link'
+import { createSupabaseServerClient } from '@/utils/auth-helpers'
 import { redirect } from 'next/navigation'
 
-// 1. Fetch Opportunities
-async function getOpportunities() {
-  const supabase = await createSupabaseServerClient()
-  const { data } = await supabase
-    .from('opportunities')
-    .select('*')
-    .order('created_at', { ascending: false })
-  return data || []
-}
-
-// 2. Fetch User (To check login status)
-async function getUser() {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
-}
-
-export default async function Home() {
-  const opportunities = await getOpportunities()
-  const user = await getUser()
-
-  // Server Action to handle Logout
-  const signOut = async () => {
+export default function LoginPage() {
+  
+  const signIn = async (formData: FormData) => {
     'use server'
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    
+    // FIX: Added 'await' here
     const supabase = await createSupabaseServerClient()
-    await supabase.auth.signOut()
-    redirect('/login')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      console.error(error.message)
+      return redirect('/login?message=Could not authenticate user')
+    }
+
+    return redirect('/')
+  }
+
+  const signUp = async (formData: FormData) => {
+    'use server'
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    
+    // FIX: Added 'await' here
+    const supabase = await createSupabaseServerClient()
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        // Ensure this URL matches your local environment
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      console.error(error.message)
+      return redirect('/login?message=Could not create user')
+    }
+
+    return redirect('/login?message=Check email to confirm signup')
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Navbar */}
-      <nav className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-indigo-600">DiscoverTech</h1>
-          
-          <div className="flex gap-4 items-center">
-            {user ? (
-              // If Logged In: Show Email & Logout
-              <>
-                <div className="text-sm text-gray-600 hidden md:block">
-                  {user.email}
-                </div>
-                <form action={signOut}>
-                  <button className="flex items-center gap-2 text-sm font-medium hover:text-red-600">
-                    <LogOut size={16} /> Logout
-                  </button>
-                </form>
-              </>
-            ) : (
-              // If Guest: Show Login
-              <Link href="/login">
-                <button className="text-sm font-medium hover:text-indigo-600">Login</button>
-              </Link>
-            )}
-
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">
-              Post Opportunity
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <div className="bg-indigo-900 text-white py-12 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Find Your Next Tech Adventure</h2>
-          <p className="text-indigo-200 mb-8">Hackathons, Jobs, and Webinars curated for you.</p>
-          <input 
-            type="text" 
-            placeholder="Search opportunities..." 
-            className="w-full max-w-md px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
-
-      {/* Feed Section */}
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        <h3 className="text-xl font-bold mb-6">Latest Opportunities</h3>
+    <div className="flex justify-center items-center min-h-screen bg-gray-50 text-gray-900">
+      <form className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm space-y-6">
+        <h2 className="text-2xl font-bold text-center text-indigo-600">Enter the Realm</h2>
         
-        <div className="grid md:grid-cols-2 gap-6">
-          {opportunities.map((item: any) => (
-            <div key={item.id} className="bg-white p-6 rounded-xl border hover:shadow-lg transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-2 
-                    ${item.type === 'Hackathon' ? 'bg-purple-100 text-purple-700' : 
-                      item.type === 'Job' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {item.type}
-                  </span>
-                  <h3 className="text-lg font-bold">{item.title}</h3>
-                </div>
-                <a href={item.link} target="_blank" className="text-gray-400 hover:text-indigo-600">
-                  <ExternalLink size={20} />
-                </a>
-              </div>
-
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <div className="flex items-center gap-2">
-                  <Building2 size={16} />
-                  <span>{item.organization}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} />
-                  <span>{item.date}</span>
-                </div>
-              </div>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">{item.description}</p>
-            </div>
-          ))}
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">Email</label>
+            <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                placeholder="your@email.com"
+            />
         </div>
-      </div>
-    </main>
+        <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                placeholder="••••••••"
+            />
+        </div>
+
+        <div className="flex flex-col gap-3">
+            <button formAction={signIn} className="w-full bg-indigo-600 text-white py-2 rounded-md font-semibold hover:bg-indigo-700 transition">
+                Sign In
+            </button>
+            <button formAction={signUp} className="w-full border border-indigo-600 text-indigo-600 py-2 rounded-md font-semibold hover:bg-indigo-50 transition">
+                Sign Up
+            </button>
+        </div>
+      </form>
+    </div>
   )
 }
