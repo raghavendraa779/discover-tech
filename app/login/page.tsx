@@ -8,7 +8,6 @@ export default function LoginPage() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     
-    // FIX: Added 'await' here
     const supabase = await createSupabaseServerClient()
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -29,14 +28,12 @@ export default function LoginPage() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     
-    // FIX: Added 'await' here
     const supabase = await createSupabaseServerClient()
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        // Ensure this URL matches your local environment
         emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/auth/callback`,
       },
     })
