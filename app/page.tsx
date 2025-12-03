@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { Calendar, MapPin, Building2, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
-import SearchInput from '@/app/components/search-input'
+import SearchInput from '@/app/components/search-input' // Ensure this path is correct
 
 // Updated function to accept a search query
 async function getOpportunities(query: string) {
@@ -24,12 +24,19 @@ async function getOpportunities(query: string) {
   return data
 }
 
-// Next.js 15: searchParams is now a Promise that must be awaited
+// 2. Fetch User (To check login status)
+// We fetch user here to show their email in the navbar
+async function getUser() {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
 export default async function Home(props: { searchParams: Promise<{ query?: string }> }) {
   const searchParams = await props.searchParams
   const query = searchParams?.query || ''
   
   const opportunities = await getOpportunities(query)
+  const user = await getUser()
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
@@ -38,18 +45,32 @@ export default async function Home(props: { searchParams: Promise<{ query?: stri
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold text-indigo-600">DiscoverTech</h1>
           <div className="flex gap-4 items-center">
-            <Link 
-              href="/login" 
-              className="text-sm font-medium hover:text-indigo-600 px-3 py-2"
-            >
-              Login
-            </Link>
             
-            <Link href="/post">
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">
-                Post Opportunity
-              </button>
-            </Link>
+            {user ? (
+              // LOGGED IN VIEW
+              <>
+                <Link 
+                  href="/profile" 
+                  className="text-sm text-gray-600 hidden md:block hover:text-indigo-600 underline decoration-dotted"
+                >
+                  {user.email}
+                </Link>
+                <Link href="/post">
+                  <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700">
+                    Post Opportunity
+                  </button>
+                </Link>
+              </>
+            ) : (
+              // GUEST VIEW
+              <Link 
+                href="/login" 
+                className="text-sm font-medium hover:text-indigo-600 px-3 py-2"
+              >
+                Login
+              </Link>
+            )}
+
           </div>
         </div>
       </nav>
@@ -60,7 +81,6 @@ export default async function Home(props: { searchParams: Promise<{ query?: stri
           <h2 className="text-3xl font-bold mb-4">Find Your Next Tech Adventure</h2>
           <p className="text-indigo-200 mb-8">Hackathons, Jobs, and Webinars curated for you.</p>
           
-          {/* Replaced the static input with our smart component */}
           <SearchInput />
           
         </div>
